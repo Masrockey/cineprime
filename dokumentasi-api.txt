@@ -1,0 +1,115 @@
+# MovieBox API Documentation
+
+Base URL: `http://localhost:5000/api`
+
+## Endpoints
+
+### 1. Health Check
+Check the status of the API server and upstream connectivity.
+
+*   **URL:** `/apicheck`
+*   **Method:** `GET`
+*   **Response:**
+    ```json
+    {
+      "status": "Success",
+      "code": 200,
+      "message": "API is running smoothly",
+      "latency": "1376ms",
+      "upstream": "OK"
+    }
+    ```
+
+### 2. Homepage
+Get the homepage content including top picks, trending, and categories.
+
+*   **URL:** `/home`
+*   **Method:** `GET`
+
+### 3. Search
+Search for movies or series.
+
+*   **URL:** `/search`
+*   **Method:** `GET`
+*   **Query Params:**
+    *   `keyword` (required): Search term (e.g., "Batman")
+    *   `page` (optional): Page number (default: 1)
+    *   `perPage` (optional): Items per page (default: 24)
+    *   `subjectType` (optional): Filter by type (default: 0)
+
+### 4. Detail
+Get detailed information about a specific movie or series.
+
+*   **URL:** `/detail`
+*   **Method:** `GET`
+*   **Query Params:**
+    *   `subjectId` (required): The ID of the item (e.g., "2918032533596032808")
+
+### 5. Sources (Stream & Download)
+Get direct streaming and download links for a specific episode.  
+**Note:** The API automatically handles `detailPath` extraction and Referer validation.
+
+*   **URL:** `/sources`
+*   **Method:** `GET`
+*   **Query Params:**
+    *   `subjectId` (required): The ID of the item.
+    *   `season` (optional): Season number (default: 1).
+    *   `episode` (optional): Episode number (default: 1).
+*   **Response:**
+    ```json
+    {
+      "downloads": [...],
+      "captions": [...],
+      "processedSources": [
+        {
+          "id": "...",
+          "quality": 720,
+          "directUrl": "https://...",
+          "size": "...",
+          "format": "mp4"
+        }
+      ]
+    }
+    ```
+
+### 6. Streaming Links (Raw)
+Get raw streaming links.
+
+*   **URL:** `/stream`
+*   **Method:** `GET`
+*   **Query Params:**
+    *   `subjectId` (required)
+    *   `detailPath` (required)
+    *   `season` (optional)
+    *   `episode` (optional)
+
+### 7. Download Links (Raw)
+Get raw download links.
+
+*   **URL:** `/download`
+*   **Method:** `GET`
+*   **Query Params:**
+    *   `subjectId` (required)
+    *   `detailPath` (required)
+    *   `season` (optional)
+    *   `episode` (optional)
+
+### 8. Trending
+Get trending content.
+
+*   **URL:** `/trending`
+*   **Method:** `GET`
+
+### 9. Rank
+Get search rankings/hot moves.
+
+*   **URL:** `/rank`
+*   **Method:** `GET`
+
+### 10. Recommend
+Get recommendations based on a subject.
+
+*   **URL:** `/recommend`
+*   **Method:** `GET`
+*   **Query Params:**
+    *   `subjectId` (required)
