@@ -10,7 +10,6 @@ import { useRouter } from 'next/navigation';
 
 const sidebarItems = [
     { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
-    { name: 'Movies', href: '/admin/movies', icon: Film },
     { name: 'Users', href: '/admin/users', icon: Users },
     { name: 'Roles', href: '/admin/roles', icon: Shield },
     { name: 'Settings', href: '/admin/settings', icon: Settings },

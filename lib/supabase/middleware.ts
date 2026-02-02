@@ -41,6 +41,10 @@ export async function updateSession(request: NextRequest) {
             return NextResponse.redirect(url)
         }
 
+        console.log("Admin Check - User ID:", user.id);
+        console.log("Admin Check - Metadata:", user.app_metadata);
+        console.log("Admin Check - Role:", user.app_metadata?.role);
+
         if (user.app_metadata?.role !== 'admin') {
             const url = request.nextUrl.clone()
             url.pathname = '/'
