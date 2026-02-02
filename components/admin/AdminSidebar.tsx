@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, Settings, LogOut, Menu, Shield, Film } from 'lucide-react';
+import { LayoutDashboard, Users, Settings, LogOut, Menu, Shield, Film, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { createClient } from '@/lib/supabase/client';
@@ -11,6 +11,7 @@ import { useRouter } from 'next/navigation';
 const sidebarItems = [
     { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
     { name: 'Users', href: '/admin/users', icon: Users },
+    { name: 'Subscription', href: '/admin/subscriptions', icon: CreditCard },
     { name: 'Roles', href: '/admin/roles', icon: Shield },
     { name: 'Settings', href: '/admin/settings', icon: Settings },
 ];

@@ -1,4 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/admin';
+import UserSubscriptionManager from '@/components/admin/UserSubscriptionManager';
 import { User } from '@supabase/supabase-js';
 import {
     Table,
@@ -16,17 +17,43 @@ export default async function UsersPage() {
     let users: User[] = [];
     let errorMsg = '';
 
+    const supabase = createAdminClient();
+
     try {
         if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
             throw new Error("SUPABASE_SERVICE_ROLE_KEY is missing in .env.local");
         }
-        const supabase = createAdminClient();
+
         const { data, error } = await supabase.auth.admin.listUsers();
         if (error) throw error;
         users = data.users || [];
     } catch (e: any) {
         console.error("Error fetching users:", e);
         errorMsg = e.message;
+    }
+
+    // Fetch plans
+    let plans: any[] = [];
+    try {
+        const { data: plansData } = await supabase.from('plans').select('*');
+        plans = plansData || [];
+    } catch (error) {
+        console.error("Error fetching plans:", error);
+    }
+
+    // Fetch subscriptions for these users
+    let subscriptionsByUserId: Record<string, any> = {};
+    if (users.length > 0) {
+        const { data: subs } = await supabase
+            .from('user_subscriptions')
+            .select('user_id, status, plans(name)')
+            .in('user_id', users.map(u => u.id));
+
+        if (subs) {
+            subs.forEach((sub: any) => {
+                subscriptionsByUserId[sub.user_id] = sub;
+            });
+        }
     }
 
     return (
@@ -50,33 +77,59 @@ export default async function UsersPage() {
                             <TableHeader>
                                 <TableRow className="border-gray-800 hover:bg-transparent">
                                     <TableHead className="text-gray-400">Email</TableHead>
+                                    <TableHead className="text-gray-400">Subscription</TableHead>
                                     <TableHead className="text-gray-400">Created At</TableHead>
                                     <TableHead className="text-gray-400">Last Sign In</TableHead>
                                     <TableHead className="text-gray-400">Status</TableHead>
+                                    <TableHead className="text-gray-400">Action</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {users.map((user) => (
-                                    <TableRow key={user.id} className="border-gray-800 hover:bg-gray-900/50">
-                                        <TableCell className="font-medium">{user.email}</TableCell>
-                                        <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
-                                        <TableCell>
-                                            {user.last_sign_in_at
-                                                ? new Date(user.last_sign_in_at).toLocaleDateString()
-                                                : 'Never'}
-                                        </TableCell>
-                                        <TableCell>
-                                            {user.confirmed_at ? (
-                                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-500/10 text-green-500">Confirmed</span>
-                                            ) : (
-                                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-500/10 text-yellow-500">Pending</span>
-                                            )}
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
+                                {users.map((user) => {
+                                    const sub = subscriptionsByUserId[user.id];
+                                    return (
+                                        <TableRow key={user.id} className="border-gray-800 hover:bg-gray-900/50">
+                                            <TableCell className="font-medium">{user.email}</TableCell>
+                                            <TableCell>
+                                                {sub ? (
+                                                    <div className="flex flex-col">
+                                                        <span className="font-medium text-white">{sub.plans?.name || 'Unknown Plan'}</span>
+                                                        <span className={`text-xs ${sub.status === 'active' ? 'text-green-500' : 'text-gray-500'
+                                                            }`}>
+                                                            {sub.status.charAt(0).toUpperCase() + sub.status.slice(1)}
+                                                        </span>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-gray-500">-</span>
+                                                )}
+                                            </TableCell>
+                                            <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
+                                            <TableCell>
+                                                {user.last_sign_in_at
+                                                    ? new Date(user.last_sign_in_at).toLocaleDateString()
+                                                    : 'Never'}
+                                            </TableCell>
+                                            <TableCell>
+                                                {user.confirmed_at ? (
+                                                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-500/10 text-green-500">Confirmed</span>
+                                                ) : (
+                                                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-500/10 text-yellow-500">Pending</span>
+                                                )}
+                                            </TableCell>
+                                            <TableCell>
+                                                <UserSubscriptionManager
+                                                    userId={user.id}
+                                                    userEmail={user.email || ''}
+                                                    plans={plans}
+                                                    currentSubscription={sub}
+                                                />
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                })}
                                 {users.length === 0 && (
                                     <TableRow>
-                                        <TableCell colSpan={4} className="text-center text-gray-500 py-8">
+                                        <TableCell colSpan={5} className="text-center text-gray-500 py-8">
                                             No users found.
                                         </TableCell>
                                     </TableRow>

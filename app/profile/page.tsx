@@ -8,9 +8,11 @@ import { createClient } from '@/lib/supabase/client';
 import { Switch } from '@/components/ui/switch';
 import { User, Bookmark, History, FileText, ChevronRight, Crown, Shield } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import PlanSelector from '@/components/subscription/PlanSelector';
 
 export default function ProfilePage() {
     const [user, setUser] = useState<any>(null);
+    const [subscription, setSubscription] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
     const [supabase] = useState(() => createClient());
@@ -22,6 +24,16 @@ export default function ProfilePage() {
                 router.push('/login');
             } else {
                 setUser(user);
+                // Fetch subscription
+                const { data: sub } = await supabase
+                    .from('user_subscriptions')
+                    .select('*, plans(name)')
+                    .eq('user_id', user.id)
+                    .single();
+
+                if (sub) {
+                    setSubscription(sub);
+                }
             }
             setLoading(false);
         };
@@ -64,10 +76,6 @@ export default function ProfilePage() {
                                 {user.email?.charAt(0).toUpperCase()}
                             </AvatarFallback>
                         </Avatar>
-                        {/* Edit Icon Badge (Optional) */}
-                        {/* <div className="absolute bottom-0 right-0 bg-gray-800 p-1 rounded-full border border-black">
-                            <Camera className="w-4 h-4 text-gray-400" />
-                        </div> */}
                     </div>
 
                     <h1 className="text-2xl font-bold mb-1">{user.user_metadata?.full_name || "Cineprime User"}</h1>
@@ -90,13 +98,14 @@ export default function ProfilePage() {
                     ))}
                 </div>
 
-                {/* Premium Button */}
-                <Button
-                    className="w-full h-14 bg-gradient-to-r from-red-600 to-red-900 hover:from-red-700 hover:to-red-950 text-white text-lg font-bold rounded-xl shadow-lg shadow-red-900/40 flex items-center justify-center gap-2 mb-6"
-                >
-                    <Crown className="w-6 h-6 fill-white" />
-                    Join premium
-                </Button>
+                {/* Premium Button / Plan Selector */}
+                {/* Premium Button / Plan Selector */}
+                <PlanSelector
+                    userId={user.id}
+                    currentPlanName={subscription?.plans?.name}
+                    subscriptionStatus={subscription?.status}
+                    expiryDate={subscription?.current_period_end}
+                />
 
                 {/* Sign Out (Custom) */}
                 <button
