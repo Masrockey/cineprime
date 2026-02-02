@@ -50,6 +50,11 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: '*.dramaboxdb.com',
+      },
+      {
+        protocol: 'http',
+        hostname: '43.228.214.96',
+        port: '8000',
       }
     ],
   },

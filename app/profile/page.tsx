@@ -44,8 +44,8 @@ export default function ProfilePage() {
         { icon: User, label: "Account settings", href: "/profile/account" },
         { icon: Bookmark, label: "Bookmark", href: "/profile/bookmarks" },
         { icon: History, label: "History", href: "/history" },
-        { icon: Shield, label: "Contact support", href: "#" },
-        { icon: FileText, label: "Terms & condition", href: "#" },
+        { icon: Shield, label: "Contact support", href: "/contact" },
+        { icon: FileText, label: "Terms & condition", href: "/terms" },
     ];
 
     return (

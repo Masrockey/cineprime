@@ -1,22 +1,27 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Loader2, CheckCircle, AlertCircle, Camera, User as UserIcon } from 'lucide-react';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import Image from 'next/image';
 
 export default function AccountSettingsPage() {
     const [user, setUser] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [uploading, setUploading] = useState(false);
     const [fullName, setFullName] = useState('');
+    const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
     const [password, setPassword] = useState('');
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
     const router = useRouter();
     const supabase = createClient();
 
@@ -28,11 +33,61 @@ export default function AccountSettingsPage() {
             } else {
                 setUser(user);
                 setFullName(user.user_metadata?.full_name || '');
+                setAvatarUrl(user.user_metadata?.avatar_url || null);
             }
             setLoading(false);
         };
         getUser();
     }, [router, supabase]);
+
+    const handleAvatarClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        if (!event.target.files || event.target.files.length === 0) {
+            return;
+        }
+
+        const file = event.target.files[0];
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+        const filePath = `${fileName}`;
+
+        setUploading(true);
+        setMessage(null);
+
+        try {
+            // 1. Upload to Storage
+            const { error: uploadError } = await supabase.storage
+                .from('avatars')
+                .upload(filePath, file, { upsert: true });
+
+            if (uploadError) throw uploadError;
+
+            // 2. Get Public URL
+            const { data: { publicUrl } } = supabase.storage
+                .from('avatars')
+                .getPublicUrl(filePath);
+
+            // 3. Update User Metadata
+            const { error: updateError } = await supabase.auth.updateUser({
+                data: { avatar_url: publicUrl }
+            });
+
+            if (updateError) throw updateError;
+
+            setAvatarUrl(publicUrl);
+            setMessage({ type: 'success', text: 'Profile picture updated!' });
+            router.refresh(); // Refresh to update server components/navbar if needed
+
+        } catch (error: any) {
+            console.error(error);
+            setMessage({ type: 'error', text: 'Error uploading image: ' + error.message });
+        } finally {
+            setUploading(false);
+        }
+    };
 
     const handleUpdateProfile = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -83,6 +138,46 @@ export default function AccountSettingsPage() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
+                        <div className="flex flex-col items-center mb-8">
+                            {/* Hidden File Input */}
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                onChange={handleFileChange}
+                                className="hidden"
+                                accept="image/*"
+                            />
+
+                            {/* Avatar Display */}
+                            <div
+                                onClick={handleAvatarClick}
+                                className="relative w-24 h-24 rounded-full overflow-hidden cursor-pointer group border-2 border-gray-700 hover:border-red-600 transition-colors"
+                            >
+                                {avatarUrl ? (
+                                    <Image
+                                        src={avatarUrl}
+                                        alt="Avatar"
+                                        fill
+                                        className="object-cover"
+                                    />
+                                ) : (
+                                    <div className="w-full h-full bg-gray-800 flex items-center justify-center">
+                                        <UserIcon className="w-10 h-10 text-gray-400" />
+                                    </div>
+                                )}
+
+                                {/* Hover Overlay */}
+                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                    {uploading ? (
+                                        <Loader2 className="w-6 h-6 text-white animate-spin" />
+                                    ) : (
+                                        <Camera className="w-6 h-6 text-white" />
+                                    )}
+                                </div>
+                            </div>
+                            <p className="mt-2 text-sm text-gray-400">Click to change avatar</p>
+                        </div>
+
                         <form onSubmit={handleUpdateProfile} className="space-y-6">
 
                             {/* Email (Read Only) */}
