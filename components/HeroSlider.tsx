@@ -37,7 +37,7 @@ export default function HeroSlider({ items }: HeroSliderProps) {
     const getData = (item: any) => {
         const imageUrl = item.image?.url || item.cover?.url || item.subject?.cover?.url;
         const title = item.title || item.subject?.title;
-        const description = item.description || item.subject?.description || "No description available.";
+        const description = item.description || item.subject?.description || "";
         let id = item.subjectId || item.subject?.subjectId;
         if (typeof id !== 'string') {
             id = "";
@@ -79,9 +79,11 @@ export default function HeroSlider({ items }: HeroSliderProps) {
                             <h1 className="text-4xl md:text-6xl font-bold text-white drop-shadow-md mb-4 transition-all duration-500">
                                 {title}
                             </h1>
-                            <p className="text-white text-sm md:text-lg drop-shadow-md mb-6 line-clamp-3 transition-all duration-500 delay-100">
-                                {description}
-                            </p>
+                            {description && (
+                                <p className="text-white text-sm md:text-lg drop-shadow-md mb-6 line-clamp-3 transition-all duration-500 delay-100">
+                                    {description}
+                                </p>
+                            )}
                             <div className="flex flex-row gap-3 transition-all duration-500 delay-200">
                                 <Link
                                     href={`/movie/${id}`}
